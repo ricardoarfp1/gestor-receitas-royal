@@ -42,8 +42,7 @@ function registerRoute(name, fn) { routes[name] = fn; }
 function navigate(name, params = {}) {
   // Proteção: ignora navegação repetida para a mesma rota
   if (App.navigating) return;
-  // Reset cache se mudar de rota
-  if (name !== App.route) { _authChecked = false; _authResult = null; }
+  // Cache mantido entre rotas para evitar logout
   if (App.route === name && JSON.stringify(App.params) === JSON.stringify(params)) return;
 
   App.navigating = true;
