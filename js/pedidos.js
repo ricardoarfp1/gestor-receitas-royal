@@ -82,11 +82,23 @@ registerRoute('pedido_form', async ({ id = 'novo' } = {}) => {
   const isNovo = id === 'novo';
   renderLayout('', 'pedidos');
 
-  // Carregar setores e produtos
-  const [{ data: setores }, { data: produtos }] = await Promise.all([
-    db.from('setores_producao').select('*').order('ordem'),
-    db.from('produtos_pedido').select('*, setores_producao(nome)').eq('ativo', true).order('ordem'),
-  ]);
+  // Carregar setores e produtos (com diagnóstico visível)
+  const rSet  = await db.from('setores_producao').select('*').order('ordem');
+  const rProd = await db.from('produtos_pedido').select('*').eq('ativo', true).order('ordem');
+  const setores  = rSet.data;
+  const produtos = rProd.data;
+  if (rSet.error || rProd.error || !setores?.length || !produtos?.length) {
+    renderLayout('', 'pedidos');
+    setMain(`<div class="card" style="max-width:720px">
+      <h3 style="color:var(--danger)">Diagnóstico do módulo Pedidos</h3>
+      <p style="font-family:monospace;font-size:0.8rem;margin-top:12px">
+        setores_producao: ${rSet.error ? 'ERRO: '+rSet.error.message : (setores?.length||0)+' registros'}<br/>
+        produtos_pedido: ${rProd.error ? 'ERRO: '+rProd.error.message : (produtos?.length||0)+' registros'}
+      </p>
+      <p style="margin-top:12px;font-size:0.85rem">Envie um print desta tela para o suporte.</p>
+    </div>`);
+    return;
+  }
 
   // Inicializar itens
   _pedidoItens = {};
